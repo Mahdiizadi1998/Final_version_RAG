@@ -148,6 +148,10 @@ def test_connection() -> bool:
         return False
 
 
+# Alias for compatibility
+test_ollama_connection = test_connection
+
+
 if __name__ == "__main__":
     # Test the connection
     print("Testing Ollama connection...")
