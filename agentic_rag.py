@@ -161,13 +161,49 @@ class AdvancedAgenticRAG:
             results = self.pipeline.hybrid_store.search_dense(query, k=10)
         
         # Apply post-filtering if needed
-        if filtered_ids is not None:
-            results = [
-                r for r in results
-                if r.get('doc_id') in filtered_ids
-            ]
+        if filtered_ids is not None and filters.get('wells'):
+            # For RAPTOR, filter by metadata since summaries inherit well metadata
+            if strategy == 'raptor':
+                target_well = filters['wells'][0]
+                results = [
+                    r for r in results
+                    if self._matches_well_filter(r, target_well)
+                ]
+            else:
+                # For other strategies, filter by doc_id
+                results = [
+                    r for r in results
+                    if r.get('doc_id') in filtered_ids
+                ]
         
         return results[:15]  # Limit to top 15
+    
+    def _matches_well_filter(self, doc: Dict[str, Any], target_well: str) -> bool:
+        """
+        Check if document matches well filter.
+        Checks both primary_well and wells list in metadata.
+        
+        Args:
+            doc: Document dict
+            target_well: Target well name
+            
+        Returns:
+            True if document is about the target well
+        """
+        metadata = doc.get('metadata', {})
+        
+        # Check primary_well
+        if metadata.get('primary_well') == target_well:
+            return True
+        
+        # Check wells list
+        wells = metadata.get('wells', [])
+        if isinstance(wells, list) and target_well in wells:
+            return True
+        elif wells == target_well:
+            return True
+        
+        return False
     
     def _merge_results(
         self,

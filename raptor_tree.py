@@ -84,7 +84,7 @@ class RAPTORTree:
             
             # Cluster documents
             print(f"  Clustering {len(current_level_docs)} documents...")
-            clusters = self._cluster_documents(embeddings, texts)
+            clusters = self._cluster_documents(embeddings, current_level_docs)
             
             if len(clusters) <= 1:
                 print(f"  Converged at level {level-1} (only {len(clusters)} cluster)")
@@ -96,15 +96,16 @@ class RAPTORTree:
             summaries = []
             for cluster_id, cluster_docs in clusters.items():
                 print(f"    Summarizing cluster {cluster_id} ({len(cluster_docs)} docs)...")
-                summary = self._summarize_cluster(cluster_docs)
+                summary_text, aggregated_metadata = self._summarize_cluster(cluster_docs)
                 
                 summaries.append({
-                    'text': summary,
+                    'text': summary_text,
                     'metadata': {
                         'level': level,
                         'cluster_id': cluster_id,
                         'num_children': len(cluster_docs),
-                        'source': 'raptor_summary'
+                        'source': 'raptor_summary',
+                        **aggregated_metadata  # Inherit metadata from children
                     }
                 })
             
@@ -122,20 +123,20 @@ class RAPTORTree:
     def _cluster_documents(
         self,
         embeddings: np.ndarray,
-        texts: List[str]
-    ) -> Dict[int, List[str]]:
+        documents: List[Dict[str, Any]]
+    ) -> Dict[int, List[Dict[str, Any]]]:
         """
         Cluster documents using HDBSCAN.
         
         Args:
             embeddings: Document embeddings
-            texts: Document texts
+            documents: Full document objects
             
         Returns:
-            Dictionary mapping cluster_id to list of documents
+            Dictionary mapping cluster_id to list of document objects
         """
         if len(embeddings) < 2:
-            return {0: texts}
+            return {0: documents}
         
         # Use HDBSCAN for clustering
         try:
@@ -147,7 +148,7 @@ class RAPTORTree:
             cluster_labels = clusterer.fit_predict(embeddings)
         except Exception as e:
             print(f"    Warning: Clustering failed ({e}), using single cluster")
-            return {0: texts}
+            return {0: documents}
         
         # Group documents by cluster
         clusters = {}
@@ -157,7 +158,7 @@ class RAPTORTree:
             
             if label not in clusters:
                 clusters[label] = []
-            clusters[label].append(texts[idx])
+            clusters[label].append(documents[idx])
         
         # Limit to max_clusters
         if len(clusters) > self.max_clusters:
@@ -171,18 +172,22 @@ class RAPTORTree:
         
         return clusters
     
-    def _summarize_cluster(self, documents: List[str]) -> str:
+    def _summarize_cluster(self, documents: List[Dict[str, Any]]) -> tuple[str, Dict[str, Any]]:
         """
-        Summarize cluster of documents using LLM.
+        Summarize cluster of documents using LLM and aggregate metadata.
         
         Args:
-            documents: List of document texts
+            documents: List of document dicts with 'text' and 'metadata'
             
         Returns:
-            Summary text
+            Tuple of (summary_text, aggregated_metadata)
         """
+        # Extract texts and aggregate metadata
+        texts = [doc.get('text', '') for doc in documents]
+        aggregated_metadata = self._aggregate_metadata(documents)
+        
         # Concatenate documents (limit to 3000 chars total)
-        combined_text = ' '.join(documents)
+        combined_text = ' '.join(texts)
         if len(combined_text) > 3000:
             combined_text = combined_text[:3000] + "..."
         
@@ -208,10 +213,67 @@ Summary:"""
                 temperature=0.1,
                 timeout=120
             )
-            return summary.strip()
+            return summary.strip(), aggregated_metadata
         except Exception as e:
             print(f"      Error summarizing: {e}")
-            return combined_text[:500]  # Fallback to truncated text
+            return combined_text[:500], aggregated_metadata  # Fallback to truncated text
+    
+    def _aggregate_metadata(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Aggregate metadata from child documents.
+        Collects unique values for wells, formations, and other key fields.
+        
+        Args:
+            documents: List of document dicts with metadata
+            
+        Returns:
+            Aggregated metadata dictionary
+        """
+        aggregated = {}
+        
+        # Collect all metadata from children
+        all_wells = set()
+        all_formations = set()
+        all_doc_types = set()
+        
+        for doc in documents:
+            metadata = doc.get('metadata', {})
+            
+            # Collect well names
+            if 'primary_well' in metadata:
+                all_wells.add(metadata['primary_well'])
+            if 'wells' in metadata:
+                if isinstance(metadata['wells'], list):
+                    all_wells.update(metadata['wells'])
+                else:
+                    all_wells.add(metadata['wells'])
+            
+            # Collect formations
+            if 'formations' in metadata:
+                if isinstance(metadata['formations'], list):
+                    all_formations.update(metadata['formations'])
+                elif metadata['formations']:
+                    all_formations.add(metadata['formations'])
+            
+            # Collect document types
+            if 'doc_type' in metadata and metadata['doc_type']:
+                all_doc_types.add(metadata['doc_type'])
+        
+        # Add aggregated metadata
+        if all_wells:
+            # If only one well, set as primary_well
+            if len(all_wells) == 1:
+                aggregated['primary_well'] = list(all_wells)[0]
+            # If multiple wells, store all
+            aggregated['wells'] = list(all_wells)
+        
+        if all_formations:
+            aggregated['formations'] = list(all_formations)
+        
+        if all_doc_types:
+            aggregated['doc_types'] = list(all_doc_types)
+        
+        return aggregated
     
     def search_tree(
         self,
