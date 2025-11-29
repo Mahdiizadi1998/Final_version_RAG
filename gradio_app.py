@@ -63,7 +63,7 @@ class GlobalState:
             metadata_extractor = UniversalGeothermalMetadataExtractor()
             chunker = UltimateSemanticChunker()
             raptor = RAPTORTree()
-            hybrid_store = HybridIndexStore(dimension=384)
+            hybrid_store = HybridIndexStore()
             sql_store = SQLStore(":memory:")
             
             pipeline = DocumentIngestionPipeline(
@@ -300,8 +300,7 @@ def create_gradio_interface():
     """Create and configure the Gradio interface"""
     
     with gr.Blocks(
-        title="Advanced RAG System for Geothermal Well Reports",
-        theme=gr.themes.Soft()
+        title="Advanced RAG System for Geothermal Well Reports"
     ) as demo:
         
         gr.Markdown(
