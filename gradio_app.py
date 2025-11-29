@@ -80,8 +80,8 @@ class GlobalState:
             
             rag_system = AdvancedAgenticRAG(
                 pipeline=pipeline,
-                query_router=router,
-                answer_generator=answer_gen
+                router=router,
+                answer_gen=answer_gen
             )
             
             self.pipeline = pipeline
@@ -179,7 +179,9 @@ def process_uploaded_files(files: List[Any]) -> Tuple[str, str]:
         return status_msg, stats_msg
         
     except Exception as e:
-        error_msg = f"❌ Error processing files: {str(e)}"
+        import traceback
+        error_msg = f"❌ Error processing files: {str(e)}\n\n"
+        error_msg += f"Full error:\n{traceback.format_exc()}"
         print(error_msg)
         return error_msg, ""
 

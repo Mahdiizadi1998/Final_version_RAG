@@ -154,7 +154,7 @@ class HybridIndexStore:
             
             for i in range(start_idx, end_idx):
                 # Get embedding from FAISS (already normalized)
-                vec = faiss.vector_to_array(self.faiss_index.reconstruct(i))
+                vec = self.faiss_index.reconstruct(i)
                 new_embeddings.append(vec)
             
             new_embeddings = np.array(new_embeddings)

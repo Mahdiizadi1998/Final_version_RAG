@@ -138,7 +138,13 @@ class DocumentIngestionPipeline:
         
         # Index all chunks in hybrid store
         if all_chunks:
-            self.hybrid_store.add_documents(all_chunks, show_progress=True)
+            try:
+                self.hybrid_store.add_documents(all_chunks, show_progress=True)
+            except Exception as e:
+                print(f"✗ Error indexing documents: {e}")
+                import traceback
+                traceback.print_exc()
+                raise
         
         # Print summary
         print(f"\n{'='*70}")
