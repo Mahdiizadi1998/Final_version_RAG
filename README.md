@@ -31,6 +31,7 @@ A production-ready Retrieval-Augmented Generation (RAG) system designed specific
 
 ### Option 1: Automatic Setup (Recommended)
 
+#### **Linux / macOS:**
 ```bash
 # Clone the repository
 git clone https://github.com/Mahdiizadi1998/Final_version_RAG.git
@@ -42,6 +43,20 @@ cd Final_version_RAG
 # Start the web interface
 ./run.sh
 ```
+
+#### **Windows:**
+```cmd
+# Download or clone the repository
+cd Final_version_RAG-main
+
+# Run automatic setup (installs everything)
+setup.bat
+
+# Start the web interface
+run.bat
+```
+
+📖 **Windows users:** See [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md) for detailed instructions
 
 The web UI will open at: **http://localhost:7860**
 
