@@ -68,12 +68,11 @@ class GlobalState:
             
             pipeline = DocumentIngestionPipeline(
                 parser=parser,
-                vision_processor=vision_proc,
+                vision_proc=vision_proc,
                 metadata_extractor=metadata_extractor,
                 chunker=chunker,
                 raptor=raptor,
-                hybrid_store=hybrid_store,
-                sql_store=sql_store
+                hybrid_store=hybrid_store
             )
             
             router = QueryRouter()
