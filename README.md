@@ -245,14 +245,6 @@ python3 metadata_extractor.py
 - **Retrieval Quality**: 49% improvement with contextual enrichment
 - **Query Response**: ~2-5 seconds per question
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## 🙏 Acknowledgments
 
 - **Ollama**: Local LLM inference
@@ -262,13 +254,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Jina AI**: Late Chunking technique
 - **Anthropic**: Contextual Enrichment method
 - **RAPTOR**: Hierarchical summarization approach
-
-## 📞 Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Contact: Mahdiizadi1998
-
----
 
 **Made with ❤️ for the Geothermal Energy Community**
